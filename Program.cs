@@ -1,41 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SFML.Graphics;
 using SFML.Learning;
-using SFML.Graphics;
 using SFML.Window;
+using System;
 
 namespace Reaction_Game
 {
-    class Program : Game
+    internal class Program : Game
     {
-        static string backGroundMusic = LoadMusic("bg_music.wav");
+        private static readonly string backGroundMusic = LoadMusic("bg_music.wav");
+        private static readonly string actionSound = LoadSound("ActionSound.wav");
+        private const int initialScore = 0;
+        private const uint winWeight = 800;
+        private const uint winHeihgt = 600;
 
-        static void Main()
+        private static void Main()
         {
-            uint winWeight = 800;
-            uint winHeihgt = 600;
             InitWindow(winWeight, winHeihgt, "Window");
             SetFont("comic.ttf");
             PlayMusic(backGroundMusic, 20);
             Game();
         }
 
-        static unsafe void Game()
+        private static unsafe void Game()
         {
             bool active;
-            int innerCyrcleSize;
+            double innerCyrcleSize;
             int outerCyrcleSize;
-            int score = 0;
-            int highScore = 0;
+            int score = initialScore;
+            int highScore = initialScore;
             Color innerCyrcleColor = ColorSwitch(Color.Black);
             ResetParameters(&active, &innerCyrcleSize, &outerCyrcleSize, &score, &highScore);
+            double speed;
             bool keyPressed = false;
-            while(true)
+            while (true)
             {
                 DispatchEvents();
+                if (innerCyrcleSize >= outerCyrcleSize)
+                {
+                    ResetParameters(&active, &innerCyrcleSize, &outerCyrcleSize, &score, &highScore);
+                }
                 if (!keyPressed)
                 {
                     if (Keyboard.IsKeyPressed(Keyboard.Key.Space) && !active)
@@ -45,7 +48,8 @@ namespace Reaction_Game
                     }
                     else if (Keyboard.IsKeyPressed(Keyboard.Key.Space))
                     {
-                        outerCyrcleSize = innerCyrcleSize;
+                        PlaySound(actionSound, 20);
+                        outerCyrcleSize = (int)Math.Ceiling(innerCyrcleSize);
                         innerCyrcleSize = 0;
                         keyPressed = true;
                         innerCyrcleColor = ColorSwitch(innerCyrcleColor);
@@ -55,14 +59,11 @@ namespace Reaction_Game
                 {
                     keyPressed = false;
                 }
-                if (innerCyrcleSize >= outerCyrcleSize)
-                {
-                    ResetParameters(&active, &innerCyrcleSize, &outerCyrcleSize, &score, &highScore);
-                }
-                else if (active)
+                if (active)
                 {
                     score++;
-                    innerCyrcleSize++;
+                    speed = 1 + score / 500 * 0.3; // 1 + int / int * double
+                    innerCyrcleSize += speed;
                 }
                 ClearWindow();
                 FillGame(active, innerCyrcleColor, score, highScore, innerCyrcleSize, outerCyrcleSize);
@@ -71,16 +72,16 @@ namespace Reaction_Game
             }
         }
 
-        static unsafe void ResetParameters(bool* active, int* innerSize, int* outerSize, int* score, int* highScore)
+        private static unsafe void ResetParameters(bool* active, double* innerSize, int* outerSize, int* score, int* highScore)
         {
             if (*score > *highScore) *highScore = *score;
             *active = false;
             *innerSize = 0;
             *outerSize = 250;
-            *score = 0;
+            *score = initialScore;
         }
 
-        static void FillGame(bool active, Color innerColor, int score, int highScore, int innerSize, int outerSize)
+        private static void FillGame(bool active, Color innerColor, int score, int highScore, double innerSize, int outerSize)
         {
             SetFillColor(255, 255, 255);
             DrawText(10, 0, "Инструкция:", 32);
@@ -98,15 +99,15 @@ namespace Reaction_Game
             DrawText(10, 525, $"Очки: {score}", 24);
             FillCircle(500, 330, outerSize);
             SetFillColor(innerColor);
-            FillCircle(500, 330, innerSize);
+            FillCircle(500, 330, (int)innerSize);
         }
 
-        static Color ColorSwitch(Color color)
+        private static Color ColorSwitch(Color color)
         {
-            var Rand = new Random();
+            Random Rand = new Random();
             Color newColor = color;
             int newColorIndex;
-            while(newColor == color)
+            while (newColor == color)
             {
                 newColorIndex = Rand.Next(6);
                 if (newColorIndex == 0) newColor = Color.Blue;
