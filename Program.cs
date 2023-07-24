@@ -12,6 +12,7 @@ namespace Reaction_Game
         private const int initialScore = 0;
         private const uint winWeight = 800;
         private const uint winHeihgt = 600;
+        private static readonly Random Rand = new Random();
 
         private static void Main()
         {
@@ -104,7 +105,6 @@ namespace Reaction_Game
 
         private static Color ColorSwitch(Color color)
         {
-            Random Rand = new Random();
             Color newColor = color;
             int newColorIndex;
             while (newColor == color)
